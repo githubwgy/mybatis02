@@ -1,0 +1,116 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<!-- namespace：命名空间，用于隔离sql
+
+-->
+<mapper namespace="com.qf.mapper.UserMapper">
+
+    <!--sql片段-->
+    <sql id="userquery">
+        select id,username,birthday,sex,address from user
+    </sql>
+
+
+    <insert id="saveUser" parameterType="User">
+        insert into user(username,birthday,sex,address) values(#{username},#{birthday},#{sex},#{address});
+    </insert>
+
+    <select id="findById" parameterType="integer" resultType="user">
+        select * from user where id=#{id}
+    </select>
+
+    <select id="findByName" parameterType="string" resultType="com.qf.pojo.User">
+      select * from user where username like #{username}
+    </select>
+
+    <select id="findAll" resultType="com.qf.pojo.User">
+        select * from user;
+    </select>
+    <select id="findByWhere" resultType="com.qf.pojo.User">
+        <include refid="userquery"></include>
+        <where>
+            <if test="username!=null and username!=''">
+                and username like #{username}
+            </if>
+            <if test="sex!=null and sex!=''">
+                and sex=#{sex}
+            </if>
+        </where>
+    </select>
+    <!--使用包装的pojo传递条件-->
+    <select id="findByQueryVo" resultType="com.qf.pojo.User" parameterType="com.qf.pojo.QueryVo">
+      select * from user where username like #{user.username}
+    </select>
+    <select id="findByPage" resultType="com.qf.pojo.User" parameterType="map">
+          select * from user ${orderby} limit #{offset},#{pageSize};
+    </select>
+    <select id="getCount" resultType="java.lang.Long">
+        select count(*) from user;
+    </select>
+    <!--collection 遍历的数组或list集合  item 每一个元素 ，separator 分隔符,open 开始内容 close 结束内容-->
+    <select id="findByIds" resultType="com.qf.pojo.User" parameterType="QueryVo">
+        <include refid="userquery"></include>
+         where id
+        <foreach collection="ids" item="value" separator="," open="in (" close=")">
+          #{value}
+        </foreach>
+    </select>
+    <select id="findByList" resultType="com.qf.pojo.User" parameterType="list">
+        <include refid="userquery"></include>
+        where id
+        <foreach collection="collection" item="value" separator="," open="in (" close=")">
+            #{value}
+        </foreach>
+
+    </select>
+    <select id="findByArray" resultType="com.qf.pojo.User">
+
+        <include refid="userquery"></include>
+        where id
+        <foreach collection="array" item="value" separator="," open="in (" close=")">
+            #{value}
+        </foreach>
+    </select>
+
+    <resultMap id="userOrderMap" type="User">
+        <!--id -->
+        <id column="id" property="id"></id>
+        <!--result-->
+        <result column="username" property="username"></result>
+        <result column="birthday" property="birthday"></result>
+        <result column="sex" property="sex"></result>
+        <result column="address" property="address"></result>
+
+        <!--一对多  collection-->
+        <collection property="orders" javaType="list" ofType="Order">
+            <!--id-->
+            <id column="oid" property="id"></id>
+            <!--result-->
+            <result column="number" property="number"></result>
+            <result column="createtime" property="createtime"></result>
+            <result column="note" property="note"></result>
+        </collection>
+
+
+    </resultMap>
+
+    <select id="findUserOrders" resultMap="userOrderMap">
+        SELECT
+        u.id,
+        u.username,
+        u.birthday,
+        u.sex,
+        u.address,
+        o.id oid,
+        o.number,
+        o.createtime,
+        o.note
+        FROM
+        `user` u
+        LEFT JOIN `orders` o ON u.id = o.user_id
+    </select>
+
+
+</mapper>
